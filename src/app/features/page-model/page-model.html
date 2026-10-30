@@ -1,0 +1,77 @@
+<div class="panel">
+  @if (agent.pageModel(); as pm) {
+    <header class="head">
+      <h2>{{ pm.title || pm.url }}</h2>
+      <span class="muted">{{ pm.url }}</span>
+      <span class="muted">Explored {{ pm.exploredAt | date: 'HH:mm:ss' }}</span>
+    </header>
+
+    <p>{{ pm.summary }}</p>
+    <p class="muted-block"><strong>Purpose.</strong> {{ pm.purpose }}</p>
+
+    <dl class="stats">
+      <div><dt>Elements found</dt><dd>{{ pm.stats.elementTotal }}</dd></div>
+      <div><dt>Kept</dt><dd>{{ pm.stats.extracted }}</dd></div>
+      <div><dt>Verified unique locators</dt><dd>{{ pm.stats.verifiedUnique }}</dd></div>
+      <div><dt>Described by model</dt><dd>{{ pm.stats.describedByModel }}</dd></div>
+      <div><dt>Invented refs dropped</dt><dd [class.warn]="pm.stats.droppedReferences > 0">{{ pm.stats.droppedReferences }}</dd></div>
+      <div><dt>Extract / verify / LLM</dt><dd>{{ pm.stats.extractMs }} / {{ pm.stats.verifyMs }} / {{ pm.stats.llmMs }} ms</dd></div>
+    </dl>
+
+    @if (pm.sections.length) {
+      <h2>Sections</h2>
+      <ul class="plain">
+        @for (s of pm.sections; track s.name) {
+          <li><strong>{{ s.name }}</strong> <span class="muted-inline">{{ s.elementRefs.join(', ') }}</span><br />{{ s.description }}</li>
+        }
+      </ul>
+    }
+
+    @if (pm.forms.length) {
+      <h2>Forms</h2>
+      <ul class="plain">
+        @for (f of pm.forms; track f.name) {
+          <li>
+            <strong>{{ f.name }}</strong> fields {{ f.fieldRefs.join(', ') || 'none' }}, submit {{ f.submitRef || 'n/a' }}
+            @if (f.validationHints.length) { <ul>@for (h of f.validationHints; track h) { <li>{{ h }}</li> }</ul> }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (pm.risks.length || pm.suggestedTestAreas.length) {
+      <div class="two-col">
+        @if (pm.risks.length) {
+          <div><h2>Risks</h2><ul>@for (r of pm.risks; track r) { <li>{{ r }}</li> }</ul></div>
+        }
+        @if (pm.suggestedTestAreas.length) {
+          <div><h2>Suggested test areas</h2><ul>@for (a of pm.suggestedTestAreas; track a) { <li>{{ a }}</li> }</ul></div>
+        }
+      </div>
+    }
+
+    <h2>Interactive elements ({{ pm.elements.length }})</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr><th>Ref</th><th>Role</th><th>Name</th><th>Locator</th><th>Strategy</th><th>Verified</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          @for (el of pm.elements; track el.ref) {
+            <tr>
+              <td>{{ el.ref }}</td>
+              <td>{{ el.role || el.tag }}@if (el.type) {<span class="muted-inline"> {{ el.type }}</span>}</td>
+              <td>{{ el.name || el.text }}</td>
+              <td><code>{{ el.locator.code }}</code></td>
+              <td>{{ el.locator.strategy }}</td>
+              <td [class.ok]="el.locator.verified" [class.warn]="!el.locator.verified">{{ el.locator.verified ? 'yes' : 'no' }}</td>
+              <td>{{ el.description }}@if (el.expectedBehavior) {<span class="muted-inline"> · {{ el.expectedBehavior }}</span>}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="empty">No page explored yet. Paste a URL in the Chat tab to build the page model.</p>
+  }
+</div>

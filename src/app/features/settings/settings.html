@@ -1,0 +1,87 @@
+<div class="panel">
+  <form class="form" (ngSubmit)="save()">
+    <h2>Language model</h2>
+    <p class="muted-block">Only free-tier or local providers are offered. Keys stay in the main process, encrypted with the OS keychain, and are never shown to this window again.</p>
+
+    @if (agent.config()?.envOverrides?.length) {
+      <p class="notice">
+        Environment overrides are active and take precedence over the values below:
+        @for (o of agent.config()!.envOverrides; track o.name) { <code>{{ o.name }}={{ o.value }}</code> }
+      </p>
+    }
+
+    <label class="field">
+      Provider
+      <select name="provider" [ngModel]="provider()" (ngModelChange)="provider.set($event)">
+        <option value="gemini">Google Gemini (free tier API)</option>
+        <option value="ollama">Ollama (local model)</option>
+      </select>
+    </label>
+
+    @if (provider() === 'gemini') {
+      <label class="field">
+        Model
+        <input name="geminiModel" [ngModel]="geminiModel()" (ngModelChange)="geminiModel.set($event)" required />
+      </label>
+      <label class="field">
+        API key
+        <input
+          name="apiKey"
+          type="password"
+          autocomplete="off"
+          [ngModel]="apiKey()"
+          (ngModelChange)="apiKey.set($event)"
+          [placeholder]="agent.config()?.hasApiKey ? '•••••••• (a key is stored; type to replace)' : 'Paste your Gemini API key'"
+        />
+      </label>
+      @if (agent.config(); as c) {
+        <p class="hint">{{ describeKey(c.keySource) }}</p>
+        @if (!c.encryptionAvailable) {
+          <div class="warning">
+            <p>
+              <strong>OS keychain unavailable</strong> (backend: {{ c.storageBackend }}). A key you enter here is kept in memory
+              and forgotten when the app closes.
+              @if (agent.platform() === 'linux') {
+                Start a Secret Service such as gnome-keyring or KWallet, or set <code>WTA_PASSWORD_STORE</code>, to enable encrypted storage.
+              } @else {
+                Encrypted storage uses the operating system's credential store; make sure it is available to this user account.
+              }
+            </p>
+            <label class="check">
+              <input type="checkbox" name="persistPlaintext" [checked]="persistPlaintext()" (change)="persistPlaintext.set(!persistPlaintext())" />
+              Save the key unencrypted on disk instead (file readable only by your user; any program running as you can read it)
+            </label>
+          </div>
+        }
+      }
+    } @else {
+      <label class="field">
+        Ollama URL
+        <input name="ollamaUrl" [ngModel]="ollamaUrl()" (ngModelChange)="ollamaUrl.set($event)" required />
+      </label>
+      <label class="field">
+        Model
+        <input name="ollamaModel" [ngModel]="ollamaModel()" (ngModelChange)="ollamaModel.set($event)" required />
+      </label>
+      <p class="hint">Run <code>ollama pull {{ ollamaModel() }}</code> first. Ollama is reached from the main process only.</p>
+    }
+
+    <label class="field">
+      Request timeout (seconds)
+      <input name="requestTimeoutSec" type="number" min="5" max="600" step="1" [ngModel]="requestTimeoutSec()" (ngModelChange)="requestTimeoutSec.set($event)" required />
+      <span class="hint">Applies to every model call. A call that runs longer is cancelled and reported in the chat.</span>
+    </label>
+
+    <div class="actions">
+      <button type="submit" class="btn primary" [disabled]="working() || !agent.available() || !dirty()">Save</button>
+      <button type="button" class="btn" (click)="test()" [disabled]="working() || !agent.available()" [title]="dirty() ? 'Saves your changes, then tests the connection' : 'Tests the saved connection'">
+        {{ dirty() ? 'Save & test' : 'Test connection' }}
+      </button>
+      @if (provider() === 'gemini' && agent.config()?.hasApiKey && agent.config()?.keySource !== 'env') {
+        <button type="button" class="btn danger" (click)="clearKey()" [disabled]="working()">Remove stored key</button>
+      }
+    </div>
+
+    @if (message(); as msg) { <p class="notice save-message" [class.error]="msg.kind === 'error'" role="status">{{ msg.text }}</p> }
+  </form>
+</div>

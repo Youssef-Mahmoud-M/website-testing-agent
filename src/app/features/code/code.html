@@ -1,0 +1,49 @@
+<div class="panel">
+  @if (agent.generatedTests(); as g) {
+    <header class="head">
+      <h2>{{ g.fileName }}</h2>
+      <span class="muted">{{ g.framework }} · {{ g.caseIds.join(', ') }} · {{ g.generatedAt | date: 'HH:mm:ss' }}</span>
+    </header>
+
+    <div class="checks">
+      @if (!g.validation.pythonAvailable) {
+        <span class="check warn">Syntax not checked: Python not found</span>
+      } @else if (g.validation.syntaxOk) {
+        <span class="check ok">Syntax OK</span>
+      } @else {
+        <span class="check bad">Syntax error</span>
+      }
+      @if (g.validation.unknownLocators.length) {
+        <span class="check bad">{{ g.validation.unknownLocators.length }} unverified locator(s)</span>
+      } @else {
+        <span class="check ok">All locators verified</span>
+      }
+      @if (g.validation.repaired) { <span class="check">Repaired once</span> }
+    </div>
+
+    @if (g.validation.syntaxError) {
+      <pre class="error">{{ g.validation.syntaxError }}</pre>
+    }
+    @if (g.validation.unknownLocators.length) {
+      <p class="notice">
+        Lines highlighted below use locators that are not in the verified table. Review them before running, or regenerate.
+      </p>
+    }
+
+    <div class="toolbar">
+      <button type="button" class="btn" (click)="copy()">Copy</button>
+      <button type="button" class="btn primary" (click)="save()">Save as…</button>
+      <button type="button" class="btn" (click)="regenerate()" [disabled]="agent.busy() || !agent.selectedCaseCount()">Regenerate</button>
+      <span class="muted run-hint">Run with: <code>pip install pytest pytest-playwright && playwright install chromium && pytest {{ g.fileName }} --headed</code></span>
+    </div>
+    @if (message(); as msg) { <p class="notice" [class.error]="msg.kind === 'error'" role="status">{{ msg.text }}</p> }
+
+    <pre class="code"><code>@for (l of lines(g.code); track l.n) {<span class="line" [class.flagged]="l.flagged"><span class="no">{{ l.n }}</span>{{ l.text }}
+</span>}</code></pre>
+  } @else {
+    <div class="empty">
+      <p>No code generated yet.</p>
+      <p>Explore a page, design and review the test plan, then generate the Python tests from the Test Plan tab.</p>
+    </div>
+  }
+</div>

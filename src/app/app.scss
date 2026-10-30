@@ -1,0 +1,151 @@
+:host {
+  display: block;
+  height: 100dvh;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+h1 {
+  font-size: 1rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  flex: none;
+
+  &.on {
+    background: var(--good);
+  }
+
+  &.busy {
+    background: var(--accent);
+    animation: pulse 1s ease-in-out infinite;
+  }
+}
+
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: none;
+}
+
+.counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--accent);
+  }
+}
+
+.counter-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-label,
+.counter-sep {
+  color: var(--ink-secondary);
+}
+
+.badge.warn {
+  background: var(--notice-bg);
+  color: var(--warn);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.4rem 1rem 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.tab {
+  border: 0;
+  background: none;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: var(--ink-secondary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--ink-secondary);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notice {
+  margin: 0.5rem 1rem 0;
+}

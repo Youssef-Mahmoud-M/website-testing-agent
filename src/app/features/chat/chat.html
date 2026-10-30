@@ -1,0 +1,71 @@
+<div class="chat">
+  <div class="log" #log>
+    @if (!agent.messages().length) {
+      <div class="empty">
+        <p><strong>Start by exploring a page.</strong></p>
+        <p>Paste a URL below. The agent opens it in the visible browser, inventories every interactive element with a verified Playwright locator, and summarises what the page does.</p>
+      </div>
+    }
+    @for (m of agent.messages(); track m.id) {
+      <article class="msg" [class.user]="m.role === 'user'" [class.error]="m.error" [attr.data-id]="m.id">
+        <div class="meta">{{ m.role === 'user' ? 'You' : 'Agent' }}</div>
+        <div class="body" [innerHTML]="m.content | simpleMarkdown"></div>
+        @if (m.error && m.retry) {
+          <div class="retry">
+            <button type="button" class="btn small" (click)="retry(m)" [disabled]="agent.busy()">Retry</button>
+            @if (isTimeout(m)) {
+              <button type="button" class="btn small" (click)="openTab.emit('settings')">Raise timeout in Settings</button>
+            } @else if (needsKey(m)) {
+              <button type="button" class="btn small" (click)="openTab.emit('settings')">Open Settings</button>
+            }
+          </div>
+        }
+        @if (m.usage; as u) {
+          <div class="usage" title="Tokens in / out and time for this iteration">
+            {{ compact(u.totalTokens) }} tokens ({{ compact(u.inputTokens) }} in, {{ compact(u.outputTokens) }} out) · {{ ms(u.latencyMs) }}
+          </div>
+        }
+      </article>
+    }
+    @if (agent.busy()) {
+      <article class="msg working">
+        <div class="meta">Agent</div>
+        <div class="body">
+          {{ agent.status().detail || (agent.status().status === 'exploring' ? 'Exploring the page…' : 'Thinking…') }}
+          @if (agent.elapsedSec() >= 3) { <span class="elapsed">{{ agent.elapsedSec() }} s</span> }
+        </div>
+      </article>
+    }
+  </div>
+
+  @if (agent.pageModel() && !agent.busy()) {
+    <div class="quick">
+      @if (!agent.testPlan()) {
+        <button type="button" class="btn primary" (click)="design()">Design test cases</button>
+      } @else if (!agent.generatedTests()) {
+        <button type="button" class="btn primary" (click)="generate()" [disabled]="!agent.selectedCaseCount()">Generate Python tests ({{ agent.selectedCaseCount() }})</button>
+        <button type="button" class="btn" (click)="openTab.emit('plan')">Review test plan</button>
+      } @else {
+        <button type="button" class="btn primary" (click)="openTab.emit('code')">Open generated code</button>
+        <button type="button" class="btn" (click)="openTab.emit('plan')">Review test plan</button>
+      }
+      <button type="button" class="btn" (click)="quick('Which elements on this page are most likely to hide defects, and why?')">Where are the risks?</button>
+      <button type="button" class="btn" (click)="quick('List the forms on this page with their fields, submit control and validation to test.')">Describe the forms</button>
+    </div>
+  }
+
+  <form class="composer" (ngSubmit)="send()">
+    <textarea
+      name="draft"
+      rows="2"
+      [ngModel]="draft()"
+      (ngModelChange)="draft.set($event)"
+      (keydown)="onKeydown($event)"
+      [disabled]="agent.busy() || !agent.available()"
+      placeholder="Paste a URL to explore, or ask the agent a question. Enter sends, Shift+Enter adds a line."
+    ></textarea>
+    <button type="submit" class="btn primary" [disabled]="agent.busy() || !agent.available() || !draft().trim()">
+      {{ isUrl ? 'Explore' : 'Send' }}
+    </button>
+  </form>
+</div>

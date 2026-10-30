@@ -1,0 +1,78 @@
+<div class="panel">
+  @if (summary(); as s) {
+    <div class="tiles">
+      <div class="tile hero">
+        <div class="label">Average response time</div>
+        <div class="value">{{ ms(s.avgLatencyMs) }}</div>
+        <div class="sub">per iteration, end to end · model only {{ ms(s.avgLlmLatencyMs) }}</div>
+      </div>
+      <div class="tile">
+        <div class="label">Tokens consumed</div>
+        <div class="value">{{ compact(s.totalTokens) }}</div>
+        <div class="sub">{{ compact(s.inputTokens) }} in · {{ compact(s.outputTokens) }} out</div>
+      </div>
+      <div class="tile">
+        <div class="label">Tokens per iteration</div>
+        <div class="value">{{ compact(s.avgTokensPerCall) }}</div>
+        <div class="sub">average</div>
+      </div>
+      <div class="tile">
+        <div class="label">Iterations</div>
+        <div class="value">{{ s.calls }}</div>
+        <div class="sub">LLM calls this session</div>
+      </div>
+    </div>
+
+    @if (!s.calls) {
+      <p class="empty">No LLM calls yet. Metrics appear as soon as the agent explores a page or answers a message.</p>
+    } @else {
+      <div class="two-col">
+        <div>
+          <h2>Per phase</h2>
+          <table class="data">
+            <thead><tr><th>Phase</th><th class="num">Calls</th><th class="num">Avg time</th><th class="num">Tokens</th></tr></thead>
+            <tbody>
+              @for (g of s.byPhase; track g.key) {
+                <tr><td>{{ g.key }}</td><td class="num">{{ g.calls }}</td><td class="num">{{ ms(g.avgLatencyMs) }}</td><td class="num">{{ g.totalTokens }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h2>Per page</h2>
+          <table class="data">
+            <thead><tr><th>Page</th><th class="num">Calls</th><th class="num">Avg time</th><th class="num">Tokens</th></tr></thead>
+            <tbody>
+              @for (g of s.byPage; track g.key) {
+                <tr><td [title]="g.key">{{ shortUrl(g.key) }}</td><td class="num">{{ g.calls }}</td><td class="num">{{ ms(g.avgLatencyMs) }}</td><td class="num">{{ g.totalTokens }}</td></tr>
+              } @empty {
+                <tr><td colspan="4" class="muted">No page-bound calls yet</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h2>Every iteration</h2>
+      <table class="data">
+        <thead>
+          <tr><th>Time</th><th>Phase</th><th>Label</th><th>Model</th><th class="num">Total</th><th class="num">Model</th><th class="num">In</th><th class="num">Out</th></tr>
+        </thead>
+        <tbody>
+          @for (m of newestFirst(); track m.id) {
+            <tr>
+              <td>{{ m.at | date: 'HH:mm:ss' }}</td>
+              <td>{{ m.phase }}</td>
+              <td class="label-cell" [title]="m.url || ''">{{ m.label }}</td>
+              <td>{{ m.provider }}/{{ m.model }}</td>
+              <td class="num">{{ ms(m.latencyMs) }}</td>
+              <td class="num">{{ ms(m.llmLatencyMs) }}</td>
+              <td class="num">{{ m.inputTokens }}</td>
+              <td class="num">{{ m.outputTokens }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</div>

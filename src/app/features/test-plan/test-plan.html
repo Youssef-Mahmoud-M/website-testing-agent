@@ -1,0 +1,90 @@
+<div class="panel">
+  @if (!agent.pageModel()) {
+    <p class="empty">Explore a page first. Paste a URL in the Chat tab, then come back here to design the tests.</p>
+  } @else if (!agent.testPlan()) {
+    <div class="empty">
+      <p>No test plan yet for <strong>{{ agent.pageModel()!.title || agent.pageModel()!.url }}</strong>.</p>
+      <p>The agent proposes structured test cases that reference only elements found on the page. You review them, untick what you do not want, and send feedback to revise.</p>
+      <button type="button" class="btn primary" (click)="design()" [disabled]="agent.busy()">Design test cases</button>
+    </div>
+  } @else if (agent.testPlan(); as plan) {
+    <header class="head">
+      <h2>Test plan for {{ plan.title || plan.url }}</h2>
+      <span class="muted">revision {{ plan.revision }} · {{ plan.cases.length }} case(s) · {{ agent.selectedCaseCount() }} selected</span>
+      @if (plan.stats.droppedItems) {
+        <span class="warn" title="Steps, expectations or whole cases the model proposed for elements that do not exist were removed">{{ plan.stats.droppedItems }} invented item(s) dropped</span>
+      }
+    </header>
+
+    <div class="toolbar">
+      <button type="button" class="btn" (click)="selectAll(true)" [disabled]="agent.busy()">Select all</button>
+      <button type="button" class="btn" (click)="selectAll(false)" [disabled]="agent.busy()">Select none</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn primary" (click)="generate()" [disabled]="agent.busy() || !agent.selectedCaseCount()">
+        Generate Python tests ({{ agent.selectedCaseCount() }})
+      </button>
+    </div>
+
+    <table class="data cases">
+      <thead>
+        <tr><th></th><th>Id</th><th>Priority</th><th>Title</th><th>Category</th><th class="num">Steps</th><th class="num">Checks</th><th></th></tr>
+      </thead>
+      <tbody>
+        @for (c of plan.cases; track c.id) {
+          <tr [class.off]="!c.selected">
+            <td><input type="checkbox" [checked]="c.selected" (change)="select(c, $event)" [disabled]="agent.busy()" [attr.aria-label]="'Include ' + c.id" /></td>
+            <td>{{ c.id }}</td>
+            <td><span class="prio" [class]="'prio ' + c.priority">{{ c.priority }}</span></td>
+            <td>{{ c.title }}</td>
+            <td>{{ c.category }}</td>
+            <td class="num">{{ c.steps.length }}</td>
+            <td class="num">{{ c.expected.length }}</td>
+            <td><button type="button" class="link" (click)="toggle(c.id)">{{ expanded().has(c.id) ? 'Hide' : 'Details' }}</button></td>
+          </tr>
+          @if (expanded().has(c.id)) {
+            <tr class="details">
+              <td></td>
+              <td colspan="7">
+                @if (c.preconditions.length) {
+                  <p><strong>Preconditions:</strong> {{ c.preconditions.join('; ') }}</p>
+                }
+                <p><strong>Steps</strong></p>
+                <ol>
+                  @for (s of c.steps; track $index) { <li>{{ describeStep(s) }}</li> }
+                  @empty { <li class="muted">No steps: the page is only loaded.</li> }
+                </ol>
+                <p><strong>Expected</strong></p>
+                <ul>
+                  @for (e of c.expected; track $index) { <li>{{ describeExpectation(e) }}</li> }
+                  @empty { <li class="muted">No expectations.</li> }
+                </ul>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+
+    <form class="feedback" (ngSubmit)="refine()">
+      <label class="field">
+        Reviewer feedback
+        <textarea
+          name="feedback"
+          rows="2"
+          [ngModel]="feedback()"
+          (ngModelChange)="feedback.set($event)"
+          [disabled]="agent.busy()"
+          placeholder="e.g. Add a case for an invalid email, merge TC-02 and TC-03, drop the accessibility case."
+        ></textarea>
+      </label>
+      <button type="submit" class="btn" [disabled]="agent.busy() || !feedback().trim()">Revise plan</button>
+    </form>
+
+    @if (plan.feedbackHistory.length) {
+      <details class="history">
+        <summary>Feedback applied so far ({{ plan.feedbackHistory.length }})</summary>
+        <ol>@for (f of plan.feedbackHistory; track $index) { <li>{{ f }}</li> }</ol>
+      </details>
+    }
+  }
+</div>

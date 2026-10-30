@@ -1,0 +1,22 @@
+<div class="panel">
+  <div class="toolbar">
+    <span class="muted">{{ agent.screenshots().length }} screenshot(s), newest first</span>
+    <label class="toggle"><input type="checkbox" [checked]="fit()" (change)="fit.set(!fit())" /> Fit to width</label>
+    <button type="button" class="btn" (click)="capture()" [disabled]="agent.busy() || !agent.available()">Take screenshot</button>
+  </div>
+
+  @if (!newestFirst().length) {
+    <p class="empty">No screenshots yet. They are captured automatically while the agent explores, or on demand with the button above.</p>
+  }
+
+  @for (shot of newestFirst(); track shot.id) {
+    <figure class="shot" [class.fit]="fit()">
+      <figcaption>
+        <strong>{{ shot.label }}</strong>
+        <span class="muted">{{ shot.url }}</span>
+        <span class="muted time">{{ shot.takenAt | date: 'HH:mm:ss' }}</span>
+      </figcaption>
+      <img [src]="shot.dataUrl" [alt]="shot.label" loading="lazy" />
+    </figure>
+  }
+</div>

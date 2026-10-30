@@ -1,0 +1,46 @@
+:host {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.form {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.muted-block,
+.hint {
+  margin: 0;
+  color: var(--ink-secondary);
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.warning {
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  background: var(--notice-bg);
+  font-size: 0.85rem;
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+}
+
+.check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+
+  input {
+    margin-top: 0.2rem;
+  }
+}
