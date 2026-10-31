@@ -196,7 +196,9 @@ export type AgentEvent =
   | { type: 'testPlan'; testPlan: TestPlan | null }
   | { type: 'generatedTests'; generatedTests: GeneratedTests | null }
   | { type: 'metric'; metric: MetricRecord }
-  | { type: 'reset' };
+  | { type: 'reset' }
+  /** Event stream (re)connected: state may have changed meanwhile. */
+  | { type: 'connected' };
 
 export interface AgentState {
   messages: ChatMessage[];

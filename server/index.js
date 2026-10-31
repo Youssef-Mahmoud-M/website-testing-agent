@@ -111,9 +111,13 @@ app.get('/api/tests/file', (req, res) => {
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---- static Angular app ----
+// The page response carries the session cookie too, so the UI's first API
+// calls already belong to one session (in dev, the UI's handshake does this).
 if (fs.existsSync(DIST)) {
-  app.use(express.static(DIST, { index: 'index.html', maxAge: '1h' }));
-  app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(path.join(DIST, 'index.html')));
+  const withSession = sessions.middleware();
+  app.get(['/', '/index.html'], withSession, (_req, res) => res.sendFile(path.join(DIST, 'index.html')));
+  app.use(express.static(DIST, { index: false, maxAge: '1h' }));
+  app.get(/^\/(?!api\/).*/, withSession, (_req, res) => res.sendFile(path.join(DIST, 'index.html')));
 } else {
   app.get('/', (_req, res) => res.status(503).send('UI not built. Run `pnpm build`, or use `pnpm start` for the Angular dev server.'));
 }

@@ -25,8 +25,26 @@ export class HttpAgentApi implements AgentApi {
   private stream: EventSource | null = null;
   private readonly agentListeners = new Set<(event: AgentEvent) => void>();
   private readonly browserListeners = new Set<(event: BrowserEvent) => void>();
+  /**
+   * The session cookie is issued by the first API response. Several requests
+   * are fired at start-up, so without this handshake each would create its
+   * own session and the event stream could end up bound to a different session
+   * than the one later requests use. Everything waits for this once.
+   */
+  private ready: Promise<void> | null = null;
 
   constructor(private readonly base = '/api') {}
+
+  private handshake(): Promise<void> {
+    if (!this.ready) {
+      this.ready = fetch(`${this.base}/app/info`, { credentials: 'same-origin' })
+        .then(() => undefined)
+        .catch(() => {
+          this.ready = null; // retry on the next call
+        });
+    }
+    return this.ready;
+  }
 
   readonly browser: AgentApi['browser'] = {
     open: (url: string) => this.post<OpenResult>('/browser/open', { url }),
@@ -96,13 +114,24 @@ export class HttpAgentApi implements AgentApi {
     };
   }
 
+  private opening = false;
+
   private ensureStream(): void {
-    if (this.stream) return;
-    const stream = new EventSource(`${this.base}/events`);
-    stream.addEventListener('agent', (e) => this.dispatch(this.agentListeners, (e as MessageEvent).data));
-    stream.addEventListener('browser', (e) => this.dispatch(this.browserListeners, (e as MessageEvent).data));
-    // The browser reconnects EventSource automatically after network blips.
-    this.stream = stream;
+    if (this.stream || this.opening) return;
+    this.opening = true;
+    void this.handshake().then(() => {
+      this.opening = false;
+      if (this.stream || (!this.agentListeners.size && !this.browserListeners.size)) return;
+      const stream = new EventSource(`${this.base}/events`);
+      stream.addEventListener('agent', (e) => this.dispatch(this.agentListeners, (e as MessageEvent).data));
+      stream.addEventListener('browser', (e) => this.dispatch(this.browserListeners, (e as MessageEvent).data));
+      // On every (re)connection, tell listeners to reload state: events sent
+      // while the stream was down are not replayed by the server.
+      stream.addEventListener('open', () => {
+        for (const listener of this.agentListeners) listener({ type: 'connected' });
+      });
+      this.stream = stream;
+    });
   }
 
   private dispatch<T>(set: Set<(event: T) => void>, raw: string): void {
@@ -124,6 +153,7 @@ export class HttpAgentApi implements AgentApi {
   }
 
   private async request<T>(path: string, init: RequestInit): Promise<T> {
+    await this.handshake();
     const res = await fetch(`${this.base}${path}`, { ...init, credentials: 'same-origin' });
     const text = await res.text();
     const data = text ? JSON.parse(text) : null;

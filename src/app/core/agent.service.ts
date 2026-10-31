@@ -201,6 +201,9 @@ export class AgentService implements OnDestroy {
       case 'metric':
         this.metrics.update((list) => [...list, event.metric]);
         break;
+      case 'connected':
+        void this.loadState();
+        break;
       case 'reset':
         this.messages.set([]);
         this.pageModel.set(null);
