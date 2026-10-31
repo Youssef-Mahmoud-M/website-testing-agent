@@ -99,6 +99,10 @@ front of it and set `TRUST_PROXY=1`.
 
 ## Configuration (server environment)
 
+`pnpm server`, `pnpm dev` and `pnpm serve:prod` load a `.env` file from the
+project root when one exists (`cp .env.example .env`), and docker compose reads
+the same file. `.env` is git-ignored; keep your key there, never in the repo.
+
 | Variable | Meaning |
 |---|---|
 | `PORT`, `HOST` | default `3000`, `127.0.0.1`. Set `HOST=0.0.0.0` to accept remote connections |
