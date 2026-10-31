@@ -28,8 +28,7 @@ export class CodePanel {
   protected async save(): Promise<void> {
     await this.attempt(async () => {
       const result = await this.agent.saveTests();
-      const web = this.agent.platform() === 'web';
-      this.message.set(result.saved ? { kind: 'ok', text: web ? `Downloading ${result.path}` : `Saved to ${result.path}` } : { kind: 'ok', text: 'Save cancelled.' });
+      this.message.set(result.saved ? { kind: 'ok', text: `Downloading ${result.path}` } : { kind: 'ok', text: 'Download cancelled.' });
     });
   }
 

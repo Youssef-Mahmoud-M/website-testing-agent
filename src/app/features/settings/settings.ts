@@ -17,7 +17,6 @@ export class SettingsPanel {
   protected readonly ollamaUrl = signal('http://127.0.0.1:11434');
   protected readonly requestTimeoutSec = signal(60);
   protected readonly apiKey = signal('');
-  protected readonly persistPlaintext = signal(false);
   protected readonly message = signal<{ kind: 'ok' | 'error'; text: string } | null>(null);
   protected readonly working = signal(false);
 
@@ -54,7 +53,7 @@ export class SettingsPanel {
   protected async clearKey(): Promise<void> {
     await this.withStatus(async () => {
       await this.agent.saveConfig({ apiKey: '' });
-      this.ok('Stored API key removed.');
+      this.ok('API key forgotten for this session.');
     });
   }
 
@@ -77,10 +76,7 @@ export class SettingsPanel {
       ollamaUrl: this.ollamaUrl().trim(),
       requestTimeoutSec: Number(this.requestTimeoutSec()),
     };
-    if (this.apiKey().trim()) {
-      input.apiKey = this.apiKey().trim();
-      input.persistPlaintext = this.persistPlaintext();
-    }
+    if (this.apiKey().trim()) input.apiKey = this.apiKey().trim();
     const view = await this.agent.saveConfig(input);
     this.apiKey.set('');
     return input.apiKey ? `Settings saved. ${this.describeKey(view.keySource)}` : 'Settings saved.';
@@ -88,14 +84,13 @@ export class SettingsPanel {
 
   protected describeKey(source: KeySource): string {
     switch (source) {
-      case 'encrypted':
-        return 'The API key is stored encrypted with the OS keychain.';
-      case 'plaintext':
-        return 'The API key is stored unencrypted on disk, readable only by your user account.';
       case 'session':
-        return 'The API key is kept in memory and will be forgotten when the app closes.';
+        return 'The API key is held in server memory for this browser session. It is forgotten when the session ends (after 30 minutes without activity) or when the server restarts.';
       case 'env':
-        return 'Using GEMINI_API_KEY from the environment.';
+        return 'Using the GEMINI_API_KEY configured in the server environment.';
+      case 'encrypted':
+      case 'plaintext':
+        return 'The API key is stored on the server.';
       default:
         return 'No API key configured yet.';
     }

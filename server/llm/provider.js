@@ -22,7 +22,7 @@ function createProvider(config) {
   switch (config.provider) {
     case 'gemini':
       if (!config.apiKey) {
-        throw new LlmError('No Gemini API key configured. Add one in Settings or set GEMINI_API_KEY.');
+        throw new LlmError('No Gemini API key configured. Enter one in Settings, or set GEMINI_API_KEY in the server environment.');
       }
       return new GeminiProvider({ apiKey: config.apiKey, model: config.geminiModel, timeoutMs });
     case 'ollama':
