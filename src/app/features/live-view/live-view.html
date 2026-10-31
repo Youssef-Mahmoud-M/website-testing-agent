@@ -1,0 +1,20 @@
+<aside class="live">
+  <header class="bar">
+    <span class="dot" [class.on]="browser.status().running" [class.busy]="agent.busy()"></span>
+    <span class="title">Agent's browser</span>
+    <span class="muted url">{{ browser.frame()?.url || browser.status().url || 'not running' }}</span>
+    <button type="button" class="btn small" (click)="screenshot()" [disabled]="!browser.status().running || agent.busy()">Snapshot</button>
+  </header>
+  <div class="stage">
+    @if (browser.frame(); as f) {
+      <img [src]="f.src" alt="Live view of the page the agent is working on" />
+    } @else if (browser.status().running) {
+      <p class="placeholder">Waiting for the first frame…</p>
+    } @else {
+      <p class="placeholder">The browser opens here when you explore a URL. You watch every step the agent takes.</p>
+    }
+    @if (browser.frameError(); as err) {
+      <p class="notice error">Live view unavailable: {{ err }}</p>
+    }
+  </div>
+</aside>

@@ -1,7 +1,14 @@
 <div class="panel">
   <form class="form" (ngSubmit)="save()">
     <h2>Language model</h2>
-    <p class="muted-block">Only free-tier or local providers are offered. Keys stay in the main process, encrypted with the OS keychain, and are never shown to this window again.</p>
+    <p class="muted-block">
+      Only free-tier or local providers are offered.
+      @if (agent.platform() === 'web') {
+        Keys you enter are kept in server memory for your session only and are never shown to the browser again.
+      } @else {
+        Keys stay in the main process, encrypted with the OS keychain, and are never shown to this window again.
+      }
+    </p>
 
     @if (agent.config()?.envOverrides?.length) {
       <p class="notice">
@@ -36,7 +43,9 @@
       </label>
       @if (agent.config(); as c) {
         <p class="hint">{{ describeKey(c.keySource) }}</p>
-        @if (!c.encryptionAvailable) {
+        @if (agent.platform() === 'web') {
+          <p class="hint">Keys live in this session's server memory and are forgotten when it ends. For a permanent key, set <code>GEMINI_API_KEY</code> in the server's environment.</p>
+        } @else if (!c.encryptionAvailable) {
           <div class="warning">
             <p>
               <strong>OS keychain unavailable</strong> (backend: {{ c.storageBackend }}). A key you enter here is kept in memory

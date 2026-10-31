@@ -3,4 +3,3 @@ allowBuilds:
   esbuild: true
   lmdb: true
   msgpackr-extract: true
-  electron-winstaller: false

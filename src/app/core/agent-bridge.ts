@@ -1,7 +1,7 @@
 /**
- * Typed view of the API the Electron preload script exposes on `window.agent`.
- * Keep this in sync with electron/preload.js. The renderer has no other way
- * to reach Node, Electron, the LLM or the automated browser.
+ * The contract between the UI and the agent backend. On the website it is
+ * implemented by HttpAgentApi over the server's JSON API; the desktop edition
+ * (branch `main`) exposes the same shape on `window.agent` from its preload.
  */
 export interface OpenResult {
   url: string;
@@ -17,6 +17,10 @@ export interface BrowserStatus {
 export type BrowserEvent =
   | { type: 'navigated'; url: string }
   | { type: 'loaded'; url: string; title: string }
+  /** Live-view frame: base64 JPEG of the agent's browser. */
+  | { type: 'frame'; data: string; url: string | null; width: number | null; height: number | null }
+  | { type: 'frame-error'; message: string }
+  | { type: 'install-progress'; percent: number | null; message: string }
   | { type: 'page-closed' }
   | { type: 'closed' }
   | { type: 'reset' };
@@ -295,7 +299,19 @@ declare global {
   }
 }
 
-/** Returns the bridge, or null when running outside Electron (plain `ng serve`). */
+import { HttpAgentApi } from './http-agent-api';
+
+let httpApi: AgentApi | null = null;
+
+/**
+ * Returns the bridge: a desktop preload's `window.agent` when present,
+ * otherwise an HTTP client for the server API. Null only where neither
+ * exists, such as unit tests without EventSource.
+ */
 export function getAgentApi(): AgentApi | null {
-  return typeof window !== 'undefined' && window.agent ? window.agent : null;
+  if (typeof window === 'undefined') return null;
+  if (window.agent) return window.agent;
+  if (typeof EventSource === 'undefined' || typeof fetch === 'undefined') return null;
+  if (!httpApi) httpApi = new HttpAgentApi();
+  return httpApi;
 }

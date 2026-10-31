@@ -7,14 +7,10 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "electron:build": "ng build && node scripts/electron.js",
-    "electron:run": "node scripts/electron.js",
-    "electron:dev": "node scripts/electron.js --dev",
-    "package:linux": "ng build && electron-builder --linux",
-    "package:win": "ng build && electron-builder --win",
-    "package:all": "ng build && electron-builder --linux --win"
+    "server": "node server/index.js",
+    "dev": "node server/index.js --dev",
+    "serve:prod": "ng build && node server/index.js"
   },
-  "main": "electron/main.js",
   "private": true,
   "dependencies": {
     "@angular/common": "^22.1.0",
@@ -23,6 +19,7 @@
     "@angular/forms": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "express": "^5.3.0",
     "playwright": "^1.64.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
@@ -31,59 +28,14 @@
     "@angular/build": "^22.1.5",
     "@angular/cli": "^22.1.5",
     "@angular/compiler-cli": "^22.1.0",
-    "electron": "^44.7.0",
-    "electron-builder": "^26.15.3",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
     "vitest": "^4.0.8"
   },
-  "description": "Human-in-the-loop web testing agent: explore a page, design tests with a reviewer, generate Playwright tests.",
+  "description": "Human-in-the-loop web testing agent as a website: explore a page, design tests with a reviewer, generate Playwright tests.",
   "author": {
     "name": "Youssef Abdelfattah",
     "email": "mabdelfattah@4sw.app"
-  },
-  "homepage": "https://github.com/4sw/website-testing-agent",
-  "build": {
-    "appId": "app.4sw.website-testing-agent",
-    "productName": "Website Testing Agent",
-    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
-    "directories": {
-      "output": "release",
-      "buildResources": "build"
-    },
-    "files": [
-      "dist/website-testing-agent/browser/**",
-      "electron/**",
-      "package.json"
-    ],
-    "asarUnpack": [
-      "node_modules/playwright-core/**",
-      "node_modules/playwright/**"
-    ],
-    "npmRebuild": false,
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Development",
-      "maintainer": "mabdelfattah@4sw.app",
-      "synopsis": "Web testing agent"
-    },
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
-      "signAndEditExecutable": true
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true
-    },
-    "portable": {
-      "artifactName": "${productName}-${version}-${os}-${arch}-portable.${ext}"
-    }
   }
 }

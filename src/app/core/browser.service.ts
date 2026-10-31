@@ -2,7 +2,7 @@ import { Injectable, NgZone, OnDestroy, signal } from '@angular/core';
 import { BrowserEvent, BrowserStatus, getAgentApi, OpenResult } from './agent-bridge';
 
 /**
- * Angular-side handle on the visible Playwright browser that the Electron
+ * Angular-side handle on the Playwright browser that the agent backend
  * main process controls. All state is exposed as signals.
  */
 @Injectable({ providedIn: 'root' })
@@ -17,6 +17,9 @@ export class BrowserService implements OnDestroy {
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly events = signal<BrowserEvent[]>([]);
+  /** Latest live-view frame of the agent's browser (data URL), if streaming. */
+  readonly frame = signal<{ src: string; url: string | null; width: number | null; height: number | null; at: number } | null>(null);
+  readonly frameError = signal<string | null>(null);
 
   constructor(private readonly zone: NgZone) {
     this.unsubscribe = this.api?.browser.onEvent((event) => this.zone.run(() => this.onEvent(event))) ?? null;
@@ -58,10 +61,20 @@ export class BrowserService implements OnDestroy {
   }
 
   private onEvent(event: BrowserEvent): void {
+    if (event.type === 'frame') {
+      this.frame.set({ src: `data:image/jpeg;base64,${event.data}`, url: event.url, width: event.width, height: event.height, at: Date.now() });
+      return;
+    }
+    if (event.type === 'frame-error') {
+      this.frameError.set(event.message);
+      return;
+    }
+    if (event.type === 'install-progress') return;
     this.events.update((list) => [...list.slice(-49), event]);
     if (event.type === 'loaded') this.title.set(event.title);
     if (event.type === 'closed' || event.type === 'page-closed' || event.type === 'reset') {
       this.status.set({ running: false, url: null });
+      this.frame.set(null);
     } else {
       void this.refreshStatus();
     }
@@ -69,7 +82,7 @@ export class BrowserService implements OnDestroy {
 
   private async run<T>(work: (api: NonNullable<typeof this.api>) => Promise<T>): Promise<T | null> {
     if (!this.api) {
-      this.error.set('Not running inside Electron: browser control is unavailable.');
+      this.error.set('Agent backend unavailable: browser control is not possible.');
       return null;
     }
     this.busy.set(true);

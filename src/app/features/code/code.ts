@@ -20,14 +20,16 @@ export class CodePanel {
   protected async copy(): Promise<void> {
     await this.attempt(async () => {
       const result = await this.agent.copyTests();
-      this.message.set({ kind: 'ok', text: result.via === 'electron' ? 'Copied to the clipboard.' : `Copied to the clipboard via ${result.via}.` });
+      const direct = result.via === 'electron' || result.via === 'browser';
+      this.message.set({ kind: 'ok', text: direct ? 'Copied to the clipboard.' : `Copied to the clipboard via ${result.via}.` });
     });
   }
 
   protected async save(): Promise<void> {
     await this.attempt(async () => {
       const result = await this.agent.saveTests();
-      this.message.set(result.saved ? { kind: 'ok', text: `Saved to ${result.path}` } : { kind: 'ok', text: 'Save cancelled.' });
+      const web = this.agent.platform() === 'web';
+      this.message.set(result.saved ? { kind: 'ok', text: web ? `Downloading ${result.path}` : `Saved to ${result.path}` } : { kind: 'ok', text: 'Save cancelled.' });
     });
   }
 

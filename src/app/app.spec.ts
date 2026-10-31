@@ -20,11 +20,17 @@ describe('App', () => {
     expect(tabs).toEqual(['Chat', 'Test Plan', 'Code', 'Screenshots', 'Page Model', 'Metrics', 'Settings']);
   });
 
-  it('should report that the agent is unavailable outside Electron', async () => {
+  it('should report that the agent backend is unavailable without a bridge', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.notice')?.textContent).toContain('outside Electron');
+    expect(compiled.querySelector('.notice')?.textContent).toContain('backend unavailable');
+  });
+
+  it('should render the live view column', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-live-view')).toBeTruthy();
   });
 
   it('should show the token counter at zero', async () => {

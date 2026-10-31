@@ -5,6 +5,7 @@ import { compact, formatMs } from './core/format';
 import { Tab } from './core/tabs';
 import { ChatPanel } from './features/chat/chat';
 import { CodePanel } from './features/code/code';
+import { LiveViewPanel } from './features/live-view/live-view';
 import { MetricsPanel } from './features/metrics/metrics';
 import { PageModelPanel } from './features/page-model/page-model';
 import { ScreenshotsPanel } from './features/screenshots/screenshots';
@@ -12,7 +13,7 @@ import { SettingsPanel } from './features/settings/settings';
 import { TestPlanPanel } from './features/test-plan/test-plan';
 
 @Component({
-  imports: [ChatPanel, TestPlanPanel, CodePanel, ScreenshotsPanel, PageModelPanel, MetricsPanel, SettingsPanel],
+  imports: [ChatPanel, TestPlanPanel, CodePanel, ScreenshotsPanel, PageModelPanel, MetricsPanel, SettingsPanel, LiveViewPanel],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

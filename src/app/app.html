@@ -1,4 +1,6 @@
 <div class="shell">
+  <div class="workspace">
+  <div class="column">
   <header class="topbar">
     <div class="brand">
       <h1>Website Testing Agent</h1>
@@ -35,7 +37,7 @@
   </header>
 
   @if (!agent.available()) {
-    <p class="notice">Running outside Electron. Start the app with <code>pnpm electron:dev</code> to use the agent.</p>
+    <p class="notice">Agent backend unavailable. Start the server with <code>pnpm server</code> (and <code>pnpm start</code> for the dev UI).</p>
   }
   @if (agent.error(); as error) {
     <p class="notice error">{{ error }}</p>
@@ -65,4 +67,7 @@
       @case ('settings') { <app-settings-panel /> }
     }
   </section>
+  </div>
+  <app-live-view class="live-column" />
+  </div>
 </div>

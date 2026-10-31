@@ -57,7 +57,7 @@ export class AgentService implements OnDestroy {
   private ticker: ReturnType<typeof setInterval> | null = null;
   readonly error = signal<string | null>(null);
   readonly config = signal<LlmConfigView | null>(null);
-  /** 'linux' | 'win32' | 'darwin', or null outside Electron. */
+  /** 'web' on the website, an OS name on the desktop edition, null without a backend. */
   readonly platform = signal<string | null>(null);
   readonly summary = computed(() => summarise(this.metrics()));
 
@@ -212,9 +212,9 @@ export class AgentService implements OnDestroy {
     }
   }
 
-  /** Runs an IPC call and rethrows failures with the Electron IPC prefix removed. */
+  /** Runs a backend call and rethrows failures with transport prefixes removed. */
   private async call<T>(work: (api: NonNullable<typeof this.api>) => Promise<T>): Promise<T> {
-    if (!this.api) throw new Error('Not running inside Electron: the agent is unavailable.');
+    if (!this.api) throw new Error('Agent backend unavailable.');
     try {
       return await work(this.api);
     } catch (err) {

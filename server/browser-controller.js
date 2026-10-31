@@ -1,15 +1,18 @@
-// Drives the visible Playwright browser the agent works in.
-// It is a separate Chromium process launched by Playwright, not a view inside
-// the Electron window, so the target site never shares a process tree with
-// the app and the same engine is used for exploration and for running the
-// generated tests.
+// Drives the Playwright browser the agent works in.
+// On a server the browser runs headless and the user watches it through a
+// live view: CDP screencast frames are emitted as 'frame' events and streamed
+// to the browser tab. HEADLESS=false shows the real window for local runs.
 const { EventEmitter } = require('node:events');
 const { chromium } = require('playwright');
-const { ensureBrowser } = require('./browser-install');
+
+const MIN_FRAME_INTERVAL_MS = 150;
 
 class BrowserController extends EventEmitter {
-  constructor() {
+  constructor({ headless = true } = {}) {
     super();
+    this.headless = headless;
+    this.lastFrameAt = 0;
+    this.cdp = null;
     /** @type {import('playwright').Browser | null} */
     this.browser = null;
     /** @type {import('playwright').BrowserContext | null} */
@@ -33,11 +36,10 @@ class BrowserController extends EventEmitter {
 
   async launch() {
     await this.close();
-    await ensureBrowser((progress) => this.emit('event', { type: 'install-progress', ...progress }));
     const { x, y, width, height } = this.windowBounds;
     this.browser = await chromium.launch({
-      headless: false,
-      args: [`--window-position=${x},${y}`, `--window-size=${width},${height}`],
+      headless: this.headless,
+      args: this.headless ? [] : [`--window-position=${x},${y}`, `--window-size=${width},${height}`],
     });
     this.browser.on('disconnected', () => {
       this.browser = null;
@@ -47,8 +49,9 @@ class BrowserController extends EventEmitter {
     });
 
     // A fresh, isolated context per session: no cookies or storage carry over.
-    this.context = await this.browser.newContext({ viewport: null });
+    this.context = await this.browser.newContext(this.headless ? { viewport: { width: 1280, height: 800 } } : { viewport: null });
     this.page = await this.context.newPage();
+    await this.startScreencast();
 
     this.page.on('framenavigated', (frame) => {
       if (frame === this.page.mainFrame()) {
@@ -60,6 +63,30 @@ class BrowserController extends EventEmitter {
       this.emit('event', { type: 'loaded', url: this.page.url(), title });
     });
     this.page.on('close', () => this.emit('event', { type: 'page-closed' }));
+  }
+
+  /** Stream JPEG frames of the page through 'frame' events, throttled. */
+  async startScreencast() {
+    try {
+      this.cdp = await this.context.newCDPSession(this.page);
+      this.cdp.on('Page.screencastFrame', (frame) => {
+        this.cdp.send('Page.screencastFrameAck', { sessionId: frame.sessionId }).catch(() => undefined);
+        const now = Date.now();
+        if (now - this.lastFrameAt < MIN_FRAME_INTERVAL_MS) return;
+        this.lastFrameAt = now;
+        this.emit('event', {
+          type: 'frame',
+          data: frame.data,
+          url: this.page?.url() ?? null,
+          width: frame.metadata?.deviceWidth ?? null,
+          height: frame.metadata?.deviceHeight ?? null,
+        });
+      });
+      await this.cdp.send('Page.startScreencast', { format: 'jpeg', quality: 45, maxWidth: 1024, maxHeight: 768, everyNthFrame: 2 });
+    } catch (err) {
+      this.cdp = null;
+      this.emit('event', { type: 'frame-error', message: err.message });
+    }
   }
 
   /** @param {string} url already validated by the caller */
@@ -90,6 +117,7 @@ class BrowserController extends EventEmitter {
     this.browser = null;
     this.context = null;
     this.page = null;
+    this.cdp = null;
     if (browser) await browser.close().catch(() => undefined);
   }
 
