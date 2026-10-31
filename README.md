@@ -70,6 +70,33 @@ pnpm serve:prod                         # http://127.0.0.1:3000
 pnpm test                               # unit tests
 ```
 
+## Docker (recommended for Windows, servers and the cloud)
+
+One image contains both the frontend and the backend: the build stage compiles
+the Angular app to static files, the runtime stage (Playwright's official image,
+which already includes Chromium and its system libraries) serves those files
+and the API from one port. Nothing is downloaded at first use.
+
+```bash
+cp .env.example .env            # put your GEMINI_API_KEY in .env
+docker compose up -d --build    # http://localhost:3000
+docker compose logs -f agent
+```
+
+Or without compose:
+
+```bash
+docker build -t website-testing-agent:0.1.0 .
+docker run -d --name wta -p 3000:3000 --shm-size=1g \
+  -e GEMINI_API_KEY=... -e BLOCK_PRIVATE_URLS=1 website-testing-agent:0.1.0
+```
+
+On Windows, install Docker Desktop (WSL 2 backend) and run the same commands
+in PowerShell. The container runs as Playwright's unprivileged `pwuser`, drops
+all capabilities, and `/api/health` serves as the liveness probe. For a server
+reachable by others, put a TLS-terminating reverse proxy with authentication in
+front of it and set `TRUST_PROXY=1`.
+
 ## Configuration (server environment)
 
 | Variable | Meaning |

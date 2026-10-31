@@ -45,3 +45,6 @@ Thumbs.db
 
 # Packaged builds
 /release
+
+# Local secrets for docker compose
+.env

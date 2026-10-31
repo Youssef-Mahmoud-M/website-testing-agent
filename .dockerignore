@@ -1,0 +1,9 @@
+node_modules
+dist
+release
+.angular
+.git
+.vscode
+docs
+*.log
+.env

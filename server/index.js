@@ -52,6 +52,9 @@ app.use('/api', (req, res, next) => {
   }
   next();
 });
+// Liveness probe for containers and load balancers: no session is created.
+app.get('/api/health', (_req, res) => res.json({ ok: true, version: VERSION, sessions: sessions.map.size }));
+
 app.use('/api', sessions.middleware());
 
 const wrap = (fn) => async (req, res) => {

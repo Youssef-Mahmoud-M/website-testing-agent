@@ -1,0 +1,27 @@
+services:
+  agent:
+    build: .
+    image: website-testing-agent:0.1.0
+    ports:
+      - "3000:3000"
+    environment:
+      HOST: 0.0.0.0
+      # A public server must not be usable to probe its own network.
+      BLOCK_PRIVATE_URLS: "1"
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1}
+      LLM_TIMEOUT_SEC: ${LLM_TIMEOUT_SEC:-60}
+      # Set to "1" when a reverse proxy in front of this terminates TLS.
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    # Headless Chromium needs more shared memory than Docker's 64 MB default.
+    shm_size: 1gb
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    # Lets the container reach an Ollama running on the Windows/macOS host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

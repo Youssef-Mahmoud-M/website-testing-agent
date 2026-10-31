@@ -39,7 +39,8 @@ class BrowserController extends EventEmitter {
     const { x, y, width, height } = this.windowBounds;
     this.browser = await chromium.launch({
       headless: this.headless,
-      args: this.headless ? [] : [`--window-position=${x},${y}`, `--window-size=${width},${height}`],
+      // --disable-dev-shm-usage keeps headless Chromium stable in containers with a small /dev/shm.
+      args: this.headless ? ['--disable-dev-shm-usage'] : [`--window-position=${x},${y}`, `--window-size=${width},${height}`],
     });
     this.browser.on('disconnected', () => {
       this.browser = null;
