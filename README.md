@@ -4,6 +4,13 @@ A human-in-the-loop QA assistant: a tester chats with an agent that drives a
 visible browser through four phases, Explore, Design, Implement and Verify.
 The full specification lives in `docs/project_modfied.pdf`.
 
+## Two editions
+
+| Branch | What it is | Build from source |
+|---|---|---|
+| `main` (this branch) | Desktop app (Electron) with a separate visible Playwright browser; packages to a Linux AppImage and Windows installer | see **Running** and **Packaging** below |
+| `website` | The same agent as a website: Node server, live view of a headless browser, one Docker image for UI and API | `git switch website`, then follow its README (`docker compose up -d --build`) |
+
 ## Architecture
 
 - **Angular 22 renderer** (`src/`): the chat and dashboard UI. It runs inside
